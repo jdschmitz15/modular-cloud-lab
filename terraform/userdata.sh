@@ -55,12 +55,12 @@ chmod +x "$LAB_DIR/traffic-generator"
 rm -rf /tmp/linux_amd64 "$TG_ZIP"
 
 # Run traffic check script
-#"$LAB_DIR/tg-check.sh" "$LAB_DIR" "$LAB_DIR/traffic.csv"
+/$LAB_DIR/tg-check.sh /$LAB_DIR /$LAB_DIR/traffic.csv > /dev/null 2>&1
 
 # Set up cron jobs
 CRON_FILE="/tmp/mycron"
 cat <<EOL > "$CRON_FILE"
-*/5 * * * *  /$LAB_DIR/tg-check.sh /$LAB_DIR /$LAB_DIR/traffic.csv > out.txt 
+*/5 * * * *  /$LAB_DIR/tg-check.sh /$LAB_DIR /$LAB_DIR/traffic.csv > /dev/null 2>&1
 EOL
 
 # If using Terraform, append dynamically:

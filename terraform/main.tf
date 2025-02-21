@@ -39,48 +39,54 @@ module "aws_paas" {
   aws_subnets = module.aws_network.aws_subnets
   aws_security_groups = module.aws_network.aws_security_groups
   aws_vpcs = module.aws_network.aws_vpcs
+
+   depends_on = [ module.aws_network ]
 }
 
 # # Call the AWS container module
-# module "aws_container" {
-#   source = "./modules/aws_container"
-#   aws_config = local.aws_config
-#   aws_subnets = module.aws_network.aws_subnets
-# }
+module "aws_container" {
+  source = "./modules/aws_container"
+  aws_config = local.aws_config
+  aws_subnets = module.aws_network.aws_subnets
+
+   depends_on = [ module.aws_network ]
+}
 
 # Call the Azure VNet module
-# module "azure_base" {
-#   source = "./modules/azure_base"
-#   azure_config = local.azure_config
-# }
+module "azure_base" {
+  source = "./modules/azure_base"
+  azure_config = local.azure_config
+}
 
 # # # Call the Azure VNet module
-# module "azure_network" {
-#   source = "./modules/azure_network"
-#   azure_config = local.azure_config
-#   azurerm_resource_group_rg=module.azure_base.azurerm_resource_group_rg
-#   azurerm_storage_account_vnet_storage = module.azure_base.azurerm_storage_account_vnet_storage
+module "azure_network" {
+  source = "./modules/azure_network"
+  azure_config = local.azure_config
+  azurerm_resource_group_rg=module.azure_base.azurerm_resource_group_rg
+  azurerm_storage_account_vnet_storage = module.azure_base.azurerm_storage_account_vnet_storage
 
   
-#   depends_on = [ module.azure_base ]
-#   }
+  depends_on = [ module.azure_base ]
+  }
 
-# # Call the Azure Server module
-# module "azure_servers" {
-#   source = "./modules/azure_servers"
-#   azure_config = local.azure_config  
-#   azurerm_resource_group_rg=module.azure_base.azurerm_resource_group_rg
-#   azurerm_subnets = module.azure_network.azurerm_subnets
-#   azurerm_db_subnets= module.azure_network.azurerm_db_subnets
-#   azurerm_network_security_group = module.azure_network.azurerm_network_security_group
-# }
+# Call the Azure Server module
+module "azure_servers" {
+  source = "./modules/azure_servers"
+  azure_config = local.azure_config  
+  azurerm_resource_group_rg=module.azure_base.azurerm_resource_group_rg
+  azurerm_subnets = module.azure_network.azurerm_subnets
+  azurerm_db_subnets= module.azure_network.azurerm_db_subnets
+  azurerm_network_security_group = module.azure_network.azurerm_network_security_group
+
+   depends_on = [ module.azure_network ]
+}
 
 # # Call the AWS PaaS module
-# module "azure_paas" {
-#   source = "./modules/azure_paas"
-#   azure_config = local.azure_config
-#   azurerm_db_subnets = module.azure_network.azurerm_db_subnets
-# }
+module "azure_paas" {
+  source = "./modules/azure_paas"
+  azure_config = local.azure_config
+  azurerm_db_subnets = module.azure_network.azurerm_db_subnets
+}
 
 # # Call the AWS Containers module
 # module "azure_container" {

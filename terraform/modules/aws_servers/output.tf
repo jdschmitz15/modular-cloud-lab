@@ -5,3 +5,6 @@ output "aws_instance_ids" {
 output "aws_ec2_private_ip" {
   value = { for k, v in aws_instance.ec2s : k => v.private_ip }
 }
+output "aws_ec2_public_ip" {
+  value = { for k, v in aws_instance.ec2s : k => v.public_ip }
+}

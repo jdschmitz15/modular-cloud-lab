@@ -22,7 +22,7 @@ resource "aws_db_instance" "db_instances" {
 resource "null_resource" "lambda_archive" {
   for_each = var.aws_config.lambdaFunctions
   provisioner "local-exec" {
-    command = "cd lambda-code && zip lambda_function.zip lambda_function.py && cd ../"
+    command = "cd ${path.module}/lambda-code && zip lambda_function.zip lambda_function.py && cd ../"
   }
 
   triggers = {
@@ -62,7 +62,7 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
 # Create Lambda function
 resource "aws_lambda_function" "lambda_function" {
   for_each = var.aws_config.lambdaFunctions
-  filename         = each.value["fileName"]
+  filename         = "${path.module}/${each.value["fileName"]}"
   function_name    = each.key
   role             = aws_iam_role.lambda_exec_role[each.key].arn
   handler          = "lambda_function.lambda_handler"
@@ -76,8 +76,8 @@ resource "aws_lambda_function" "lambda_function" {
 
   environment {
     variables = {
-      TARGET_IP   = "fin-dev-app01.lot48labs.com"
-      TARGET_PORT = "8080"
+      TARGET_IP   = "192.168.2.69"
+      TARGET_PORT = "8888"
     }
   }
 }

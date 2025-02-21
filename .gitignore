@@ -1,6 +1,6 @@
 *.terraform*
 *terraform.tfstate.backup
-*terraform.tfstate
+*terraform.tfstate*
 *.DS_store
 letsencrypt/config/*
 letsencrypt/logs/*

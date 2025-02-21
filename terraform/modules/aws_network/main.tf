@@ -47,14 +47,16 @@ resource "aws_flow_log" "vpc_flow_log" {
 }
 
 resource "aws_route_table" "private" {
-  for_each = var.aws_config.vpcs
+  for_each = var.aws_config.vpcs 
   vpc_id   = aws_vpc.vpcs[each.key].id
 
-  route {
+dynamic route {
+  for_each = { for k, v in each.value.subnets : k => v if contains(keys(aws_nat_gateway.ngws), each.key) }
+  content {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.ngws[each.key].id
+    nat_gateway_id = contains(keys(aws_nat_gateway.ngws), each.key) ? aws_nat_gateway.ngws[each.key].id : null
   }
-
+}
   route {
     cidr_block         = "192.168.0.0/16"
     transit_gateway_id = aws_ec2_transit_gateway.tgw.id
@@ -63,6 +65,8 @@ resource "aws_route_table" "private" {
   tags = {
     Name = "${each.key}-private-rt"
   }
+
+  depends_on = [ aws_nat_gateway.ngws, aws_ec2_transit_gateway.tgw ]
 }
 
 resource "aws_route_table" "public" {
@@ -195,19 +199,32 @@ resource "aws_eip" "ngw_eips" {
   }
 }
 
-// Every public subnet gets a nat gateway - logic assumes only 1 public subnet per VPC
 resource "aws_nat_gateway" "ngws" {
-  for_each = {
-    for subnet in local.vpc_subnets : subnet.vpc_name => subnet if subnet.public
+  for_each = {  
+    for vpc_key, vpc in var.aws_config.vpcs : vpc_key => vpc if contains(keys(vpc["subnets"]), "public")
   }
   connectivity_type = "public"
-  allocation_id     = aws_eip.ngw_eips[each.value["vpc_name"]].id
-  subnet_id         = aws_subnet.subnets[each.value["subnet_name"]].id
+  allocation_id     = aws_eip.ngw_eips[each.key].id
+  subnet_id         = aws_subnet.subnets["${each.key}.public"].id
   depends_on        = [aws_internet_gateway.igws]
   tags = {
-    Name = "${each.value["subnet_name"]}-ngw"
+    Name = "${each.key}-ngw"
   }
 }
+
+// Every public subnet gets a nat gateway - logic assumes only 1 public subnet per VPC
+# resource "aws_nat_gateway" "ngws" {
+#   for_each = {
+#     for subnet in local.vpc_subnets : subnet.vpc_name => subnet #if subnet.public
+#   }
+#   connectivity_type = "public"
+#   allocation_id     = aws_eip.ngw_eips[each.value["vpc_name"]].id
+#   subnet_id         = aws_subnet.subnets[each.value["subnet_name"]].id
+#   depends_on        = [aws_internet_gateway.igws]
+#   tags = {
+#     Name = "${each.value["subnet_name"]}-ngw"
+#   }
+# }
 
 // Create 1 transit gateways to connect all the VPCs
 resource "aws_ec2_transit_gateway" "tgw" {
@@ -222,8 +239,10 @@ resource "aws_ec2_transit_gateway" "tgw" {
 
 // Attach the transit gateway to all subnets in the VPC
 resource "aws_ec2_transit_gateway_vpc_attachment" "tgw-attachment" {
-  for_each           = var.aws_config.vpcs
+  for_each           = { 
+    for k, v in var.aws_config.vpcs : k=>v if  contains(keys(v["subnets"]), "subnet-1")
+  }
   transit_gateway_id = aws_ec2_transit_gateway.tgw.id
   vpc_id             = aws_vpc.vpcs[each.key].id
-  subnet_ids         = [for subnetName, v in var.aws_config.vpcs[each.key].subnets : aws_subnet.subnets["${each.key}.${subnetName}"].id]
+  subnet_ids         = [for subnetName, v in var.aws_config.vpcs[each.key].subnets :  aws_subnet.subnets["${each.key}.${subnetName}"].id if subnetName!="public"]
 }

@@ -29,15 +29,17 @@ module "aws_servers" {
   aws_config = local.aws_config
   aws_subnets = module.aws_network.aws_subnets
   aws_security_groups = module.aws_network.aws_security_groups
+
+  depends_on = [ module.aws_network ]
 }
 # #Call the AWS paas module
-# module "aws_paas" {
-#   source = "./modules/aws_paas"
-#   aws_config = local.aws_config
-#   aws_subnets = module.aws_network.aws_subnets
-#   aws_security_groups = module.aws_network.aws_security_groups
-#   aws_vpcs = module.aws_network.aws_vpcs
-# }
+module "aws_paas" {
+  source = "./modules/aws_paas"
+  aws_config = local.aws_config
+  aws_subnets = module.aws_network.aws_subnets
+  aws_security_groups = module.aws_network.aws_security_groups
+  aws_vpcs = module.aws_network.aws_vpcs
+}
 
 # # Call the AWS container module
 # module "aws_container" {
@@ -45,46 +47,33 @@ module "aws_servers" {
 #   aws_config = local.aws_config
 #   aws_subnets = module.aws_network.aws_subnets
 # }
-# # # Call the AWS VPN module
-module "vpn" {
-  source = "./modules/vpn"
-  aws_config = local.aws_config
-  azure_config = local.azure_config
-  aws_vpcs = module.aws_network.aws_vpcs
-  aws_eip_ngw = module.aws_network.aws_eip_ngw
-  aws_subnets =  module.aws_network.aws_subnets
-  azurerm_subnets = module.azure_network.azurerm_subnets
-  aws_route_table_public_rt = module.aws_network.aws_route_table_public_rt
-
-depends_on = [ module.aws_base, module.aws_network, module.azure_base, module.azure_network ]
-}
 
 # Call the Azure VNet module
-module "azure_base" {
-  source = "./modules/azure_base"
-  azure_config = local.azure_config
-}
+# module "azure_base" {
+#   source = "./modules/azure_base"
+#   azure_config = local.azure_config
+# }
 
-# # Call the Azure VNet module
-module "azure_network" {
-  source = "./modules/azure_network"
-  azure_config = local.azure_config
-  azurerm_resource_group_rg=module.azure_base.azurerm_resource_group_rg
-  azurerm_storage_account_vnet_storage = module.azure_base.azurerm_storage_account_vnet_storage
+# # # Call the Azure VNet module
+# module "azure_network" {
+#   source = "./modules/azure_network"
+#   azure_config = local.azure_config
+#   azurerm_resource_group_rg=module.azure_base.azurerm_resource_group_rg
+#   azurerm_storage_account_vnet_storage = module.azure_base.azurerm_storage_account_vnet_storage
 
   
-  depends_on = [ module.azure_base ]
-  }
+#   depends_on = [ module.azure_base ]
+#   }
 
-# Call the Azure Server module
-module "azure_servers" {
-  source = "./modules/azure_servers"
-  azure_config = local.azure_config  
-  azurerm_resource_group_rg=module.azure_base.azurerm_resource_group_rg
-  azurerm_subnets = module.azure_network.azurerm_subnets
-  azurerm_db_subnets= module.azure_network.azurerm_db_subnets
-  azurerm_network_security_group = module.azure_network.azurerm_network_security_group
-}
+# # Call the Azure Server module
+# module "azure_servers" {
+#   source = "./modules/azure_servers"
+#   azure_config = local.azure_config  
+#   azurerm_resource_group_rg=module.azure_base.azurerm_resource_group_rg
+#   azurerm_subnets = module.azure_network.azurerm_subnets
+#   azurerm_db_subnets= module.azure_network.azurerm_db_subnets
+#   azurerm_network_security_group = module.azure_network.azurerm_network_security_group
+# }
 
 # # Call the AWS PaaS module
 # module "azure_paas" {
@@ -99,13 +88,19 @@ module "azure_servers" {
 #   azure_config = local.azure_config
 # }
 
-# # Call the Azure AKS module
-# module "azure_vpn" {
-#   source = "./modules/azure_vpn"
+# # # Call the AWS to AZURE VPN module.
+# module "vpn" {
+#   source = "./modules/vpn"
+#   aws_config = local.aws_config
 #   azure_config = local.azure_config
+#   aws_vpcs = module.aws_network.aws_vpcs
+#   aws_eip_ngw = module.aws_network.aws_eip_ngw
+#   aws_subnets =  module.aws_network.aws_subnets
+#   azurerm_subnets = module.azure_network.azurerm_subnets
+#   aws_route_table_public_rt = module.aws_network.aws_route_table_public_rt
 
-#   aws_vpcs = module.aws_network.aws_vpcs  
-#   aws_vpn_connection_azurevpn = module.aws_vpn.aws_vpn_connection_azurevpn
+# depends_on = [ module.aws_base, module.aws_network, module.azure_base, module.azure_network ]
 # }
+
 
 
